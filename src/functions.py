@@ -174,7 +174,7 @@ pdCode = getPDCodeFromTxtFile("/Users/dj/Flypes/knot_txt_files/knot_8_14.txt")
 # nonTrivialFourEdgesCuts = findNonTrivialFourEdgeCutsFromPD(pdCode)
 #
 # tangleList = getTanglesFromPD(pdCode)
-# 
+#
 # flypeList = getFlypesFromPD(pdCode)
 
 print getAdjMatrixFromPD(pdCode)
