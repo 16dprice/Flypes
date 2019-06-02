@@ -168,15 +168,55 @@ def getFlypesFromPD(pdCode):
     return flypeList
 
 
-pdCode = getPDCodeFromTxtFile("/Users/dj/Flypes/knot_txt_files/knot_8_14.txt")
+def getNextStrand(crossing, strand):
+    return crossing[ (crossing.index(strand) + 2) % 4 ]
+
+def getInstrands(flype):
+
+    crossing = flype["crossing"]
+    tangle = flype["tangle"]
+
+    instrands = []
+
+    for c in tangle:
+        intersect = set(c).intersection(set(crossing))
+        if len(intersect) > 0:
+            instrands.extend(intersect)
+        if len(intersect) == 2:
+            break
+
+    return instrands
+
+
+# expects flype in the form of {"crossing": crossing, "tangle": tangle}
+def isFlypeParallel(flype):
+
+    instrands = getInstrands(flype)
+
+    crossing = flype["crossing"]
+
+    diff1 = instrands[0] - getNextStrand(crossing, instrands[0])
+    if diff1 > 1: diff1 = -1
+    if diff1 < -1: diff1 = 1
+
+    diff2 = instrands[1] - getNextStrand(crossing, instrands[1])
+    if diff2 > 1: diff2 = -1
+    if diff2 < -1: diff2 = 1
+
+    return diff1 == diff2
+
+
+pdCode = getPDCodeFromTxtFile("../knot_txt_files/knot_8_14.txt")
 #
 # graph = getGraphFromPD(pdCode)
 # nonTrivialFourEdgesCuts = findNonTrivialFourEdgeCutsFromPD(pdCode)
 #
 # tangleList = getTanglesFromPD(pdCode)
 #
-# flypeList = getFlypesFromPD(pdCode)
+flypeList = getFlypesFromPD(pdCode)
 
-print getAdjMatrixFromPD(pdCode)
+
+
+# print getAdjMatrixFromPD(pdCode)
 
 ########################################################################################################################
