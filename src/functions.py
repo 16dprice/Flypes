@@ -206,6 +206,132 @@ def isFlypeParallel(flype):
     return diff1 == diff2
 
 
+def isPositiveCrossing(crossing):
+    return ( crossing[1] - crossing[3] == 1 or crossing[1] - crossing[3] < -1 )
+
+
+def parallelFlype(pdCode, flype):
+
+    n = len(pdCode)
+
+    tangle = flype["tangle"]
+    crossing = flype["crossing"]
+
+    instrands = getInstrands(flype)
+
+    outstrands = []
+    flatListOfTangle = sum(tangle, [])
+    for s in flatListOfTangle:
+        if flatListOfTangle.count(s) == 1 and s not in instrands:
+            outstrands.append(s)
+
+    if crossing[0] in instrands:
+        a = crossing[0]
+        reverse = True
+    else:
+        a = crossing[2]
+        reverse = False
+
+    if crossing[1] in instrands:
+        b = crossing[1]
+    else:
+        b = crossing[3]
+
+    negative = True
+    if isPositiveCrossing(crossing):
+        negative = False
+
+    # print a
+    # print b
+    # print negative
+
+    # get all the stuff that isn't in the tangle or crossing
+    newKnot = []
+    for c in pdCode:
+        if c not in tangle and c != crossing:
+            newKnot.append(c)
+
+    # print newKnot
+
+    newTangle = []
+    for c in tangle:
+        if isPositiveCrossing(c):
+            # [a, b, c, d] -> [d, c, b, a]
+            newTangle.append(list(reversed(c)))
+        else:
+            # [a, b, c, d] -> [b, a, d, c]
+            newTangle.append(list(reversed(c[2:] + c[:2])))
+
+    # print newTangle
+
+    for c in newTangle:
+        for i in range(4):
+            if reverse:
+                c[i] = c[i] + 1
+            else:
+                c[i] = c[i] - 1
+
+            # if out of range
+            if c[i] == 0:
+                c[i] = 2 * n
+
+            if c[i] == 2 * n + 1:
+                c[i] = 1
+
+    # print newTangle
+
+    if abs(a - outstrands[0]) + abs(b - outstrands[1]) == 2 * len(tangle):
+        c = outstrands[0]
+        d = outstrands[1]
+    else:
+        c = outstrands[1]
+        d = outstrands[0]
+
+    # print [c, d]
+
+    if abs(a - c) % 2 == 1:
+        # |a - c| is ODD => parity 1
+        if reverse:
+            # REVERSED
+            if negative:
+                newCrossing = [d, c, d + 1, c + 1]
+            else:
+                newCrossing = [d, c + 1, d + 1, c]
+        else:
+            # NOT REVERSED
+            if negative:
+                newCrossing = [d - 1, c - 1, d, c]
+            else:
+                newCrossing = [d - 1, c, d, c - 1]
+    else:
+        # |a - c| is EVEN => parity 0
+        if reverse:
+            # REVERSED
+            if negative:
+                newCrossing = [c, d, c + 1, d + 1]
+            else:
+                newCrossing = [c, d + 1, c + 1, d]
+        else:
+            # NOT REVERSED
+            if negative:
+                newCrossing = [c - 1, d - 1, c, d]
+            else:
+                newCrossing = [c - 1, d, c, d - 1]
+
+    for i in range(4):
+        if newCrossing[i] == 0:
+            newCrossing[i] = 2 * n
+        if newCrossing[i] == 2 * n + 1:
+            newCrossing[i] = 1
+
+    # print newCrossing
+
+    return sorted(newKnot + newTangle + [newCrossing])
+
+
+
+########################################################################################################################
+
 pdCode = getPDCodeFromTxtFile("../knot_txt_files/knot_8_14.txt")
 #
 # graph = getGraphFromPD(pdCode)
@@ -215,7 +341,13 @@ pdCode = getPDCodeFromTxtFile("../knot_txt_files/knot_8_14.txt")
 #
 flypeList = getFlypesFromPD(pdCode)
 
+print flypeList
+print parallelFlype(pdCode, flypeList[0])
 
+# testTangle = flypeList[0]["tangle"]
+# testCrossing = flypeList[0]["crossing"]
+# print testTangle
+# print testCrossing
 
 # print getAdjMatrixFromPD(pdCode)
 
