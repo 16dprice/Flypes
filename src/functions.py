@@ -1,6 +1,7 @@
 import networkx as nx
 import itertools
 import numpy as np
+import copy
 
 def getPDCodeFromTxtFile(path):
 
@@ -173,19 +174,32 @@ def getNextStrand(crossing, strand):
 
 def getInstrands(flype):
 
-    crossing = flype["crossing"]
-    tangle = flype["tangle"]
+    crossing = copy.copy(flype["crossing"])
+    tangle = copy.copy(flype["tangle"])
 
     instrands = []
 
-    for c in tangle:
-        intersect = set(c).intersection(set(crossing))
+    for cr in tangle:
+        intersect = set(cr).intersection(set(crossing))
         if len(intersect) > 0:
             instrands.extend(intersect)
         if len(intersect) == 2:
             break
 
     return instrands
+
+
+def getOutstrands(flype):
+    tangle = flype["tangle"]
+    instrands = getInstrands(flype)
+
+    outstrands = []
+    flatListOfTangle = sum(tangle, [])
+    for s in flatListOfTangle:
+        if flatListOfTangle.count(s) == 1 and s not in instrands:
+            outstrands.append(s)
+
+    return outstrands
 
 
 # expects flype in the form of {"crossing": crossing, "tangle": tangle}
@@ -209,21 +223,16 @@ def isFlypeParallel(flype):
 def isPositiveCrossing(crossing):
     return ( crossing[1] - crossing[3] == 1 or crossing[1] - crossing[3] < -1 )
 
-
+# expects flype in the form of {"crossing": crossing, "tangle": tangle}
 def parallelFlype(pdCode, flype):
 
     n = len(pdCode)
 
-    tangle = flype["tangle"]
-    crossing = flype["crossing"]
+    instrands = getInstrands(copy.copy(flype))
+    outstrands = getOutstrands(copy.copy(flype))
 
-    instrands = getInstrands(flype)
-
-    outstrands = []
-    flatListOfTangle = sum(tangle, [])
-    for s in flatListOfTangle:
-        if flatListOfTangle.count(s) == 1 and s not in instrands:
-            outstrands.append(s)
+    tangle = copy.copy(flype["tangle"])
+    crossing = copy.copy(flype["crossing"])
 
     if crossing[0] in instrands:
         a = crossing[0]
@@ -237,9 +246,7 @@ def parallelFlype(pdCode, flype):
     else:
         b = crossing[3]
 
-    negative = True
-    if isPositiveCrossing(crossing):
-        negative = False
+    negative = not isPositiveCrossing(crossing)
 
     # print a
     # print b
@@ -247,36 +254,36 @@ def parallelFlype(pdCode, flype):
 
     # get all the stuff that isn't in the tangle or crossing
     newKnot = []
-    for c in pdCode:
-        if c not in tangle and c != crossing:
-            newKnot.append(c)
+    for cr in pdCode:
+        if cr not in tangle and cr != crossing:
+            newKnot.append(copy.copy(cr))
 
     # print newKnot
 
     newTangle = []
-    for c in tangle:
-        if isPositiveCrossing(c):
+    for cr in tangle:
+        if isPositiveCrossing(cr):
             # [a, b, c, d] -> [d, c, b, a]
-            newTangle.append(list(reversed(c)))
+            newTangle.append(list(reversed(copy.copy(cr))))
         else:
             # [a, b, c, d] -> [b, a, d, c]
-            newTangle.append(list(reversed(c[2:] + c[:2])))
+            newTangle.append(list(reversed(copy.copy(cr[2:] + cr[:2]))))
 
     # print newTangle
 
-    for c in newTangle:
+    for cr in newTangle:
         for i in range(4):
             if reverse:
-                c[i] = c[i] + 1
+                cr[i] = cr[i] + 1
             else:
-                c[i] = c[i] - 1
+                cr[i] = cr[i] - 1
 
             # if out of range
-            if c[i] == 0:
-                c[i] = 2 * n
+            if cr[i] == 0:
+                cr[i] = 2 * n
 
-            if c[i] == 2 * n + 1:
-                c[i] = 1
+            if cr[i] == 2 * n + 1:
+                cr[i] = 1
 
     # print newTangle
 
@@ -329,26 +336,243 @@ def parallelFlype(pdCode, flype):
     return sorted(newKnot + newTangle + [newCrossing])
 
 
+def isBoundaryInCode(code, n):
+    for crossing in code:
+        if 2 * n in crossing and 1 in crossing:
+            return True
+    return False
+
+
+def ensureStrandIsInBounds(s, n):
+    newS = s
+    while newS <= 0:
+        newS += 2 * n
+    while newS > 2 * n:
+        newS -= 2 * n
+    return newS
+
+
+def incrementCode(code, incVal, n):
+    newCode = copy.copy(code)
+    for cr in newCode:
+        for i in range(len(cr)):
+            cr[i] += incVal
+            cr[i] = ensureStrandIsInBounds(cr[i], n)
+    return newCode
+
+
+def getNextStrand(cr, s):
+    return cr[(cr.index(s) + 2) % 4]
+
+# expects flype in the form of {"crossing": crossing, "tangle": tangle}
+def antiparallelFlype(pdCode, flype):
+
+    n = len(pdCode)
+
+    oldTangle = copy.copy(flype["tangle"])
+    oldCrossing = copy.copy(flype["crossing"])
+
+    oldKnot = []
+    for cr in pdCode:
+        if cr not in oldTangle and cr != oldCrossing:
+            oldKnot.append(copy.copy(cr))
+
+    # print oldTangle
+    # print oldCrossing
+    # print
+
+    count = 0
+
+    while isBoundaryInCode(oldTangle + [oldCrossing], n) and count <= 2 * n:
+        oldKnot = incrementCode(oldKnot, 1, n)
+        oldTangle = incrementCode(oldTangle, 1, n)
+        oldCrossing = incrementCode([oldCrossing], 1, n)[0]
+
+        count += 1
+
+    # print oldTangle
+    # print oldCrossing
+
+    instrands = getInstrands({"tangle": oldTangle, "crossing": oldCrossing})
+    outstrands = getOutstrands({"tangle": oldTangle, "crossing": oldCrossing})
+
+    if instrands[0] - getNextStrand(oldCrossing, instrands[0]) == 1:
+        a = instrands[0]
+        b = instrands[1]
+    else:
+        a = instrands[1]
+        b = instrands[0]
+
+    inAndOutstrands = sorted(instrands + outstrands)
+
+    if (inAndOutstrands[0] == a and inAndOutstrands[1] == b) or (inAndOutstrands[2] == a and inAndOutstrands[3] == b):
+        isParityInf = True
+    else:
+        isParityInf = False
+
+    if isParityInf:
+        # is parity infinity
+        if outstrands[0] < outstrands[1]:
+            c = outstrands[0]
+            d = outstrands[1]
+        else:
+            c = outstrands[1]
+            d = outstrands[0]
+    else:
+        # is NOT parity infinity
+        if abs(a - outstrands[0]) + abs(b - outstrands[1]) == 2 * len(oldTangle):
+            c = outstrands[0]
+            d = outstrands[1]
+        else:
+            c = outstrands[1]
+            d = outstrands[0]
+
+    # print [a, b, c, d]
+
+    for cr in oldTangle:
+        if c in cr:
+            if cr[1] == c or cr[3] == c:
+                cIsOverPass = True
+            else:
+                cIsOverPass = False
+
+    positive = isPositiveCrossing(oldCrossing)
+
+    newTangle = []
+    for cr in oldTangle:
+        if isPositiveCrossing(cr):
+            # [a, b, c, d] -> [d, c, b, a]
+            newTangle.append(list(reversed(cr)))
+        else:
+            # [a, b, c, d] -> [b, a, d, c]
+            newTangle.append(list(reversed(cr[2:] + cr[:2])))
+
+    newKnot = oldKnot
+
+    if isParityInf:
+        # TRUE tangle is parity infinity
+        if a < c:
+            # TRUE a < c
+            newTangle = incrementCode(newTangle, -1, n)
+            for i in range(len(newKnot)):
+                for j in range(4):
+                    if b < newKnot[i][j] and newKnot[i][j] <= c:
+                        newKnot[i][j] = ensureStrandIsInBounds(newKnot[i][j] - 2, n)
+        else:
+            # FALSE a > c
+            newTangle = incrementCode(newTangle, 1, n)
+            for i in range(len(newKnot)):
+                for j in range(4):
+                    if d <= newKnot[i][j] and newKnot[i][j] <= a:
+                        newKnot[i][j] = ensureStrandIsInBounds(newKnot[i][j] + 2, n)
+
+    else:
+        # FALSE tangle is NOT parity infinity
+        for i in range(len(newTangle)):
+            for j in range(4):
+                if a <= newTangle[i][j] and newTangle[i][j] <= c:
+                    newTangle[i][j] = ensureStrandIsInBounds(newTangle[i][j] - 1, n)
+                if d <= newTangle[i][j] and newTangle[i][j] <= b:
+                    newTangle[i][j] = ensureStrandIsInBounds(newTangle[i][j] + 1, n)
+
+
+    if isParityInf:
+        # TRUE tangle is parity infinity
+        if a < c:
+            # a < c
+            if positive:
+                # crossing was POSITIVE
+                if cIsOverPass:
+                    newCrossing = [d - 1, c - 1, d, c - 2]
+                else:
+                    newCrossing = [c - 2, d, c - 1, d - 1]
+            else:
+                # crossing was NEGATIVE
+                if cIsOverPass:
+                    newCrossing = [d - 1, c - 2, d, c - 1]
+                else:
+                    newCrossing = [c - 2, d - 1, c - 1, d]
+        else:
+            # a > c
+            if positive:
+                # crossing was POSITIVE
+                if cIsOverPass:
+                    newCrossing = [d + 1, c + 1, d + 2, c]
+                else:
+                    newCrossing = [c, d + 2, c + 1, d + 1]
+            else:
+                # crossing was NEGATIVE
+                if cIsOverPass:
+                    newCrossing = [d + 1, c, d + 2, c + 1]
+                else:
+                    newCrossing = [c, d + 1, c + 1, d + 2]
+    else:
+        # FALSE tangle is not parity infinity
+        if positive:
+            # crossing was POSITIVE
+            if cIsOverPass:
+                newCrossing = [d, c, d + 1, c - 1]
+            else:
+                newCrossing = [c - 1, d + 1, c, d]
+        else:
+            # crossing was NEGATIVE
+            if cIsOverPass:
+                newCrossing = [d, c - 1, d + 1, c]
+            else:
+                newCrossing = [c - 1, d, c, d + 1]
+
+    # ensures that every strand is within bounds
+    newCrossing = incrementCode([newCrossing], 0, n)[0]
+
+    return sorted(newKnot + newTangle + [newCrossing])
+
+
+def performFlype(pdCode, flype):
+    if isFlypeParallel(flype):
+        return parallelFlype(pdCode, flype)
+    else:
+        return antiparallelFlype(pdCode, flype)
+
+
+def performAllFlypes(pdCode):
+    allFlypes = []
+    count = 0
+    for flype in getFlypesFromPD(pdCode):
+        flypePerformed = performFlype(copy.deepcopy(pdCode), copy.deepcopy(flype))
+        # if count == 2:
+        #     print flypePerformed
+        #     print isFlypeParallel(flype)
+        #     print flype
+            # print performFlype(copy.deepcopy(pdCode), copy.deepcopy(flype))
+        # allFlypes.append(performFlype(pdCode, flype))
+        allFlypes.append(flypePerformed)
+        count += 1
+    return allFlypes
 
 ########################################################################################################################
 
 pdCode = getPDCodeFromTxtFile("../knot_txt_files/knot_8_14.txt")
-#
-# graph = getGraphFromPD(pdCode)
-# nonTrivialFourEdgesCuts = findNonTrivialFourEdgeCutsFromPD(pdCode)
-#
-# tangleList = getTanglesFromPD(pdCode)
-#
-flypeList = getFlypesFromPD(pdCode)
-
-print flypeList
-print parallelFlype(pdCode, flypeList[0])
-
-# testTangle = flypeList[0]["tangle"]
-# testCrossing = flypeList[0]["crossing"]
-# print testTangle
-# print testCrossing
-
-# print getAdjMatrixFromPD(pdCode)
 
 ########################################################################################################################
+
+def listToCSVString(list):
+    retStr = ""
+    for val in list:
+        retStr += str(val) + ","
+    return retStr[0:len(retStr) - 1]
+
+
+def writeKnotListToCSV(filename, knotList, numCrossings):
+
+    f = open(filename, "w")
+    f.write(str(numCrossings) + "\n")
+
+    for knot in knotList:
+        for cr in knot:
+            f.write(listToCSVString(cr) + "\n")
+
+    f.close()
+
+
+allFlypesPerformed = performAllFlypes(pdCode)
+writeKnotListToCSV("demofile.csv", allFlypesPerformed, len(pdCode))
