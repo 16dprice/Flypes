@@ -6,6 +6,7 @@ import numpy as np
 import copy
 import re
 import os
+import time
 
 def getPDCodeFromTxtFile(path):
 
@@ -616,10 +617,15 @@ def getPDCodesFromFile(filename):
 
 def getAllPDCodes(pdCode):
 
-    allMinimalDiagrams = [pdCode]
+    print pdCode
+    print "\n"
+
+    allMinimalDiagrams = []
+    allMinimalDiagrams.append(pdCode)
     shouldKeepGoing = True
 
-    count = 0
+    startTime = time.time()
+    count = 0 # extra insurance for now
     while shouldKeepGoing and count < 100:
 
         oldSize = len(allMinimalDiagrams)
@@ -633,14 +639,16 @@ def getAllPDCodes(pdCode):
         for code in newPDCodes:
             allMinimalDiagrams.append(copy.deepcopy(code))
 
-        for code in allMinimalDiagrams:
-            print code
+        # for code in allMinimalDiagrams:
+        #     print code
 
         writeKnotListToTxtFile("pdcodes.txt", allMinimalDiagrams, len(pdCode))
 
         os.system("/home/src/example /home/src/")
 
         allMinimalDiagrams = getPDCodesFromFile("reduced_codes.txt")
+        for code in allMinimalDiagrams:
+            print code
 
         newSize = len(allMinimalDiagrams)
 
@@ -648,7 +656,14 @@ def getAllPDCodes(pdCode):
 
         count += 1
 
+    elapsedTime = time.time() - startTime
+    print "\n\nElapsed Time: " + str(elapsedTime) + " seconds\n\n"
     for code in allMinimalDiagrams:
         print code
 
-getAllPDCodes(pdCode)
+# getAllPDCodes(pdCode)
+
+allFlypesTest = getFlypesFromPD(pdCode)
+print allFlypesTest[5]
+print isFlypeParallel(allFlypesTest[5])
+print performFlype(pdCode, allFlypesTest[5])
