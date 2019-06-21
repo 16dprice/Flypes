@@ -4,6 +4,7 @@ import networkx as nx
 import itertools
 import numpy as np
 import copy
+import re
 
 def getPDCodeFromTxtFile(path):
 
@@ -585,6 +586,28 @@ def writeKnotListToTxtFile(filename, pdCodeList, numCrossings):
 
     f.close()
 
+
+def getPDCodeFromString(pdCodeStr):
+
+    pdCode = []
+
+    crossings = pdCodeStr.split('X')[1:]
+    for code in crossings:
+        pdCode.append(list(map(int, re.findall(r'\d+', code))))
+
+    return pdCode
+
+
+def getPDCodesFromFile(filename):
+    f = open(filename, "r")
+
+    pdCodes = []
+    for line in f:
+        pdCodes.append(getPDCodeFromString(line))
+
+    f.close()
+
+    return pdCodes
 
 allFlypesPerformed = performAllFlypes(pdCode)
 writeKnotListToTxtFile("pdcodes.txt", allFlypesPerformed, len(pdCode))
