@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
         strcpy(outfile_full_pdstor_path, strcat(outfile_path, "reduced_codes.pdstor"));
 
 	}
-    printf("here\n");
+//    printf("here\n");
 	// some declarations
 	flype_circuit = pd_new_pdstor();
 	infile = fopen(infile_full_path, "r"); // example file
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 		// get the next pd code from the file
 		// TODO: what to do if this is null???
 		next_pd_code = pd_read_KnotTheory(infile);
-        printf("done with pd code %d\n", i + 1);
+//        printf("done with pd code %d\n", i + 1);
 		// add the pd code to the flype_circuit
 		pd_addto_pdstor(flype_circuit, next_pd_code, DIAGRAM_ISOTOPY);
 
@@ -99,9 +99,9 @@ int main(int argc, char *argv[]) {
 
 	outfile = fopen(outfile_full_pdstor_path, "w");
 	pd_write_pdstor(outfile, flype_circuit);
-	printf("here2\n");
+//	printf("here2\n");
 	fclose(outfile);
-	printf("DONE WRITING TO FILE\n");
+//	printf("DONE WRITING TO FILE\n");
 
 	outfile = fopen(outfile_full_txt_path, "w");
 	for(next_pd_code = pd_stor_firstelt(flype_circuit); next_pd_code != NULL; next_pd_code = pd_stor_nextelt(flype_circuit)) {
