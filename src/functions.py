@@ -1,3 +1,5 @@
+#! /usr/bin/python2.7
+
 import networkx as nx
 import itertools
 import numpy as np
@@ -31,20 +33,20 @@ def getGraphFromPD(pdCode):
         while(strand not in pdCode[firstCrossingPos]):
             firstCrossingPos += 1
             if(firstCrossingPos > numCrossings):
-                print("Something wrong in first while loop of generateGraphFromPD")
-                print("Current strand" + strand)
+                #print "Something wrong in first while loop of generateGraphFromPD"
+                #print "Current strand" + strand
                 return
 
         secondCrossingPos = firstCrossingPos + 1
         if(secondCrossingPos > numCrossings):
-            print("Something wrong before second while loop of generateGraphFromPD")
-            print("Current strand" + strand)
+            #print "Something wrong before second while loop of generateGraphFromPD"
+            #print "Current strand" + strand
             return
         while(strand not in pdCode[secondCrossingPos]):
             secondCrossingPos += 1
             if(secondCrossingPos > numCrossings):
-                print("Something wrong in second while loop of generateGraphFromPD")
-                print("Current strand" + strand)
+                #print "Something wrong in second while loop of generateGraphFromPD"
+                #print "Current strand" + strand
                 return
 
         pdGraph.add_edge(firstCrossingPos, secondCrossingPos)
@@ -65,20 +67,20 @@ def getAdjMatrixFromPD(pdCode):
         while(strand not in pdCode[firstCrossingPos]):
             firstCrossingPos += 1
             if(firstCrossingPos > numCrossings):
-                print("Something wrong in first while loop of generateGraphFromPD")
-                print("Current strand" + strand)
+                #print "Something wrong in first while loop of generateGraphFromPD"
+                #print "Current strand" + strand
                 return
 
         secondCrossingPos = firstCrossingPos + 1
         if(secondCrossingPos > numCrossings):
-            print("Something wrong before second while loop of generateGraphFromPD")
-            print("Current strand" + strand)
+            #print "Something wrong before second while loop of generateGraphFromPD"
+            #print "Current strand" + strand
             return
         while(strand not in pdCode[secondCrossingPos]):
             secondCrossingPos += 1
             if(secondCrossingPos > numCrossings):
-                print("Something wrong in second while loop of generateGraphFromPD")
-                print("Current strand" + strand)
+                #print "Something wrong in second while loop of generateGraphFromPD"
+                #print "Current strand" + strand
                 return
 
         adjMatrix[firstCrossingPos][secondCrossingPos] += 1
@@ -555,24 +557,34 @@ pdCode = getPDCodeFromTxtFile("../knot_txt_files/knot_8_14.txt")
 
 ########################################################################################################################
 
-def listToCSVString(list):
-    retStr = ""
-    for val in list:
-        retStr += str(val) + ","
-    return retStr[0:len(retStr) - 1]
+def listToTxtString(pdCode):
+    retStr = "PD["
+
+    for i in range(len(pdCode)):
+        retStr += "X["
+        cr = pdCode[i]
+        for j in range(4):
+            if j == 3:
+                retStr += str(cr[j]) + "]"
+                if i != len(pdCode) - 1:
+                    retStr += ", "
+            else:
+                retStr += str(cr[j]) + ", "
+    retStr += "]"
+
+    return retStr
 
 
-def writeKnotListToCSV(filename, knotList, numCrossings):
+def writeKnotListToTxtFile(filename, pdCodeList, numCrossings):
 
     f = open(filename, "w")
     f.write(str(numCrossings) + "\n")
 
-    for knot in knotList:
-        for cr in knot:
-            f.write(listToCSVString(cr) + "\n")
+    for pdCode in pdCodeList:
+        f.write(listToTxtString(pdCode) + "\n")
 
     f.close()
 
 
 allFlypesPerformed = performAllFlypes(pdCode)
-writeKnotListToCSV("demofile.csv", allFlypesPerformed, len(pdCode))
+writeKnotListToTxtFile("pdcodes.txt", allFlypesPerformed, len(pdCode))
