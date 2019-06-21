@@ -5,6 +5,7 @@ import itertools
 import numpy as np
 import copy
 import re
+import os
 
 def getPDCodeFromTxtFile(path):
 
@@ -609,5 +610,45 @@ def getPDCodesFromFile(filename):
 
     return pdCodes
 
-allFlypesPerformed = performAllFlypes(pdCode)
-writeKnotListToTxtFile("pdcodes.txt", allFlypesPerformed, len(pdCode))
+# allFlypesPerformed = performAllFlypes(pdCode)
+# writeKnotListToTxtFile("pdcodes.txt", allFlypesPerformed, len(pdCode))
+
+
+def getAllPDCodes(pdCode):
+
+    allMinimalDiagrams = [pdCode]
+    shouldKeepGoing = True
+
+    count = 0
+    while shouldKeepGoing and count < 100:
+
+        oldSize = len(allMinimalDiagrams)
+
+        newPDCodes = []
+        for diagram in allMinimalDiagrams:
+            diagramsOneFlypeAway = performAllFlypes(diagram)
+            for code in diagramsOneFlypeAway:
+                newPDCodes.append(code)
+
+        for code in newPDCodes:
+            allMinimalDiagrams.append(copy.deepcopy(code))
+
+        for code in allMinimalDiagrams:
+            print code
+
+        writeKnotListToTxtFile("pdcodes.txt", allMinimalDiagrams, len(pdCode))
+
+        os.system("/home/src/example /home/src/")
+
+        allMinimalDiagrams = getPDCodesFromFile("reduced_codes.txt")
+
+        newSize = len(allMinimalDiagrams)
+
+        shouldKeepGoing = newSize != oldSize
+
+        count += 1
+
+    for code in allMinimalDiagrams:
+        print code
+
+getAllPDCodes(pdCode)
