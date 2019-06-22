@@ -17,7 +17,7 @@ def getPDCodeFromTxtFile(path):
     fileLines = file.readlines()
     for line in fileLines:
         # converts the text file lines into a list of chars that are converted to list of ints
-        pdCode.append(list(map(int, line.split(","))))
+        pdCode.append(list(map(int, line.replace("{","").replace("}","").split(","))))
 
     return pdCode
 
@@ -480,7 +480,6 @@ def antiparallelFlype(pdCode, flype):
                 if d <= newTangle[i][j] and newTangle[i][j] <= b:
                     newTangle[i][j] = ensureStrandIsInBounds(newTangle[i][j] + 1, n)
 
-
     if isParityInf:
         # TRUE tangle is parity infinity
         if a < c:
@@ -611,14 +610,11 @@ def getPDCodesFromFile(filename):
 
     return pdCodes
 
-# allFlypesPerformed = performAllFlypes(pdCode)
-# writeKnotListToTxtFile("pdcodes.txt", allFlypesPerformed, len(pdCode))
-
 
 def getAllPDCodes(pdCode):
 
-    print pdCode
-    print "\n"
+    # print pdCode
+    # print "\n"
 
     allMinimalDiagrams = []
     allMinimalDiagrams.append(pdCode)
@@ -626,7 +622,9 @@ def getAllPDCodes(pdCode):
 
     startTime = time.time()
     count = 0 # extra insurance for now
-    while shouldKeepGoing and count < 100:
+    while shouldKeepGoing and count < 10:
+
+        # print "\n\nIteration " + str(count) + "\n"
 
         oldSize = len(allMinimalDiagrams)
 
@@ -639,31 +637,49 @@ def getAllPDCodes(pdCode):
         for code in newPDCodes:
             allMinimalDiagrams.append(copy.deepcopy(code))
 
-        # for code in allMinimalDiagrams:
-        #     print code
-
         writeKnotListToTxtFile("pdcodes.txt", allMinimalDiagrams, len(pdCode))
+        # print len(allMinimalDiagrams)
 
         os.system("/home/src/example /home/src/")
 
         allMinimalDiagrams = getPDCodesFromFile("reduced_codes.txt")
-        for code in allMinimalDiagrams:
-            print code
+        # for code in allMinimalDiagrams:
+        #     print code
 
         newSize = len(allMinimalDiagrams)
 
-        shouldKeepGoing = newSize != oldSize
-
+        shouldKeepGoing = (newSize != oldSize)
         count += 1
 
     elapsedTime = time.time() - startTime
-    print "\n\nElapsed Time: " + str(elapsedTime) + " seconds\n\n"
-    for code in allMinimalDiagrams:
-        print code
+    # print "\n\nElapsed Time: " + str(elapsedTime) + " seconds\n\n"
+
+    return allMinimalDiagrams
 
 # getAllPDCodes(pdCode)
+runInfo = {
+    "3":"1",
+    "4":"1",
+    "5":"2",
+    "6":"3",
+    "7":"7",
+    "8":"18"
+}
 
-allFlypesTest = getFlypesFromPD(pdCode)
-print allFlypesTest[5]
-print isFlypeParallel(allFlypesTest[5])
-print performFlype(pdCode, allFlypesTest[5])
+for key in runInfo:
+    crNum = int(key)
+    ordering = int(runInfo[key])
+
+    totalPDCodesForCrNum = 0
+
+    for i in range(ordering):
+        txtFileName = "knot_" + str(crNum) + "_" + str(i + 1) + ".txt"
+        pdCode = getPDCodeFromTxtFile("../knot_txt_files/" + txtFileName)
+
+        # print pdCode
+        allMinimalDiagrams = getAllPDCodes(pdCode)
+
+        # print "Number of Minimal Diagrams for Knot[" + str(crNum) + ", " + str(i + 1) + "] = " + str(len(allMinimalDiagrams))
+        totalPDCodesForCrNum += len(allMinimalDiagrams)
+
+    print "Number of Minimal Diagrams for crossing number " + str(crNum) + " = " + str(totalPDCodesForCrNum)
