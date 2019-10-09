@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 		// because no garbage collection
 		free(next_pd_code);
 	}
-	printf("DONE READING PD CODES\n");
+//	printf("DONE READING PD CODES\n");
 
 	outfile = fopen(outfile_full_pdstor_path, "w");
 	pd_write_pdstor(outfile, flype_circuit);
