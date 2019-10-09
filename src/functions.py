@@ -555,7 +555,7 @@ def performAllFlypes(pdCode):
 
 ########################################################################################################################
 
-pdCode = getPDCodeFromTxtFile("../knot_txt_files/knot_8_14.txt")
+# pdCode = getPDCodeFromTxtFile("../knot_txt_files/knot_8_14.txt")
 
 ########################################################################################################################
 
@@ -637,14 +637,12 @@ def getAllPDCodes(pdCode):
         for code in newPDCodes:
             allMinimalDiagrams.append(copy.deepcopy(code))
 
-        writeKnotListToTxtFile("pdcodes.txt", allMinimalDiagrams, len(pdCode))
-        # print len(allMinimalDiagrams)
+        writeKnotListToTxtFile("pdcodes.txt", allMinimalDiagrams, len(allMinimalDiagrams))
+        print len(allMinimalDiagrams)
 
         os.system("/home/src/example /home/src/")
 
         allMinimalDiagrams = getPDCodesFromFile("reduced_codes.txt")
-        # for code in allMinimalDiagrams:
-        #     print code
 
         newSize = len(allMinimalDiagrams)
 
@@ -656,30 +654,48 @@ def getAllPDCodes(pdCode):
 
     return allMinimalDiagrams
 
-# getAllPDCodes(pdCode)
-runInfo = {
-    "3":"1",
-    "4":"1",
-    "5":"2",
-    "6":"3",
-    "7":"7",
-    "8":"18"
-}
 
-for key in runInfo:
-    crNum = int(key)
-    ordering = int(runInfo[key])
+dfsAllMinimalDiagrams = []
 
-    totalPDCodesForCrNum = 0
 
-    for i in range(ordering):
-        txtFileName = "knot_" + str(crNum) + "_" + str(i + 1) + ".txt"
-        pdCode = getPDCodeFromTxtFile("../knot_txt_files/" + txtFileName)
+def hasPDCodeBeenFound(pdCode):
 
-        # print pdCode
-        allMinimalDiagrams = getAllPDCodes(pdCode)
+    allMinimalDiagrams = copy.deepcopy(dfsAllMinimalDiagrams)
 
-        # print "Number of Minimal Diagrams for Knot[" + str(crNum) + ", " + str(i + 1) + "] = " + str(len(allMinimalDiagrams))
-        totalPDCodesForCrNum += len(allMinimalDiagrams)
+    writeKnotListToTxtFile("pdcodes.txt", allMinimalDiagrams, len(allMinimalDiagrams))
+    os.system("/home/src/example /home/src/")
+    oldSize = len(getPDCodesFromFile("reduced_codes.txt"))
 
-    print "Number of Minimal Diagrams for crossing number " + str(crNum) + " = " + str(totalPDCodesForCrNum)
+    allMinimalDiagrams.append(pdCode)
+
+    writeKnotListToTxtFile("pdcodes.txt", allMinimalDiagrams, len(allMinimalDiagrams))
+    os.system("/home/src/example /home/src/")
+    newSize = len(getPDCodesFromFile("reduced_codes.txt"))
+
+    return oldSize == newSize
+
+
+def getAllPDCodesDFS(pdCode):
+
+    global dfsAllMinimalDiagrams
+
+    if hasPDCodeBeenFound(pdCode):
+        return
+
+    dfsAllMinimalDiagrams.append(copy.deepcopy(pdCode))
+
+    diagramsOneFlypeAway = performAllFlypes(pdCode)
+
+    for code in diagramsOneFlypeAway:
+        getAllPDCodesDFS(code)
+
+
+def runGetAllPDCodesDFS(pdCode):
+    global dfsAllMinimalDiagrams
+
+    dfsAllMinimalDiagrams = []
+
+    getAllPDCodesDFS(pdCode)
+
+    return dfsAllMinimalDiagrams
+
