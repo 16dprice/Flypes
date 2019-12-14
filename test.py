@@ -6,7 +6,7 @@ from time import time
 
 # prepare data
 np.random.RandomState(100)
-arr = np.random.randint(0, 10, size=[2000, 5])
+arr = np.random.randint(0, 10, size=[4000000, 5])
 data = arr.tolist()
 
 
@@ -74,13 +74,14 @@ print(end - start)
 # print(results[:10])
 # print(end - start)
 
+pool = mp.Pool(mp.cpu_count())
+
 results = []
 
 
 # Step 1: Redefine, to accept `i`, the iteration number
 def howmany_within_range2(i, row, minimum, maximum):
     """Returns how many numbers lie within `maximum` and `minimum` in a given `row`"""
-    print(mp.current_process()._identity[0])
     count = 0
     for n in row:
         if minimum <= n <= maximum:
@@ -94,7 +95,6 @@ def collect_result(result):
     results.append(result)
 
 
-pool = mp.Pool(processes=mp.cpu_count())
 start = time()
 
 # Step 3: Use loop to parallelize

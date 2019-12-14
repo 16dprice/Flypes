@@ -7,6 +7,7 @@ import copy
 import re
 import os
 import time
+import multiprocessing as mp
 
 def getPDCodeFromTxtFile(path):
 
@@ -215,11 +216,11 @@ def isFlypeParallel(flype):
     crossing = flype["crossing"]
 
     diff1 = instrands[0] - getNextStrand(crossing, instrands[0])
-    if diff1 > 1: diff1 = -1
+    if diff1 >  1: diff1 = -1
     if diff1 < -1: diff1 = 1
 
     diff2 = instrands[1] - getNextStrand(crossing, instrands[1])
-    if diff2 > 1: diff2 = -1
+    if diff2 >  1: diff2 = -1
     if diff2 < -1: diff2 = 1
 
     return diff1 == diff2
@@ -576,9 +577,11 @@ def listToTxtString(pdCode):
 
     return retStr
 
-
+writeCount = 0
 def writeKnotListToTxtFile(filename, pdCodeList, numCrossings):
 
+    global writeCount
+    writeCount += 1
     f = open(filename, "w")
     f.write(str(numCrossings) + "\n")
 
@@ -653,49 +656,4 @@ def getAllPDCodes(pdCode):
     # print "\n\nElapsed Time: " + str(elapsedTime) + " seconds\n\n"
 
     return allMinimalDiagrams
-
-
-dfsAllMinimalDiagrams = []
-
-
-def hasPDCodeBeenFound(pdCode):
-
-    allMinimalDiagrams = copy.deepcopy(dfsAllMinimalDiagrams)
-
-    writeKnotListToTxtFile("pdcodes.txt", allMinimalDiagrams, len(allMinimalDiagrams))
-    os.system("/home/src/example /home/src/")
-    oldSize = len(getPDCodesFromFile("reduced_codes.txt"))
-
-    allMinimalDiagrams.append(pdCode)
-
-    writeKnotListToTxtFile("pdcodes.txt", allMinimalDiagrams, len(allMinimalDiagrams))
-    os.system("/home/src/example /home/src/")
-    newSize = len(getPDCodesFromFile("reduced_codes.txt"))
-
-    return oldSize == newSize
-
-
-def getAllPDCodesDFS(pdCode):
-
-    global dfsAllMinimalDiagrams
-
-    if hasPDCodeBeenFound(pdCode):
-        return
-
-    dfsAllMinimalDiagrams.append(copy.deepcopy(pdCode))
-
-    diagramsOneFlypeAway = performAllFlypes(pdCode)
-
-    for code in diagramsOneFlypeAway:
-        getAllPDCodesDFS(code)
-
-
-def runGetAllPDCodesDFS(pdCode):
-    global dfsAllMinimalDiagrams
-
-    dfsAllMinimalDiagrams = []
-
-    getAllPDCodesDFS(pdCode)
-
-    return dfsAllMinimalDiagrams
 
